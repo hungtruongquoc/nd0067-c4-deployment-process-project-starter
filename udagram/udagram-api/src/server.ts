@@ -10,12 +10,25 @@ import { V0_FEED_MODELS, V0_USER_MODELS } from "./controllers/v0/model.index";
 
 (async () => {
   dotenv.config();
+  console.log('Config loaded');
 
-  await sequelize.addModels(V0_FEED_MODELS);
-  await sequelize.addModels(V0_USER_MODELS);
-  await sequelize.sync();
+  try {
+    await sequelize.authenticate();
+  }
+  catch(error) {
+    console.log(error);
+  }
 
-  console.log("Database Connected");
+  try {
+    await sequelize.addModels(V0_FEED_MODELS);
+    await sequelize.addModels(V0_USER_MODELS);
+    console.log('Modals added');
+    await sequelize.sync({ force: true, logging: console.log });
+    console.log("Database Connected");
+  }
+  catch (ex) {
+    console.log(ex);
+  }
 
   const app = express();
   const port = process.env.PORT || 8080;
