@@ -23,6 +23,9 @@ jobs:
           keys:
             - v1-dependencies-{{ checksum "udagram/udagram-frontend/package.json" }}
             - v1-dependencies-
+      - run:
+          name: Change to front end folder
+          command: cd udagram/udagram-frontend
       # Install project dependencies
       - run:
           name: Install local dependencies
