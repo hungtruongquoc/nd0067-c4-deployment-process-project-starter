@@ -54,14 +54,7 @@ jobs:
       - run:
           working_directory: ~/projects/udagram/udagram-frontend
           name: Building
-          command: |
-            if [ "${CIRCLE_BRANCH}" == "staging" ]; then
-                npm run build-qa
-            elif [ "${CIRCLE_BRANCH}" == "master" ]; then
-                npm run build-prod
-            else
-                npm run build-dev
-            fi
+          command: npm run build
       # Cache the dist folder for the deploy job
       - save_cache:
           working_directory: ~/projects/udagram/udagram-frontend
