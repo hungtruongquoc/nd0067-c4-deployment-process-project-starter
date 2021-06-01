@@ -1,14 +1,98 @@
-# This config is equivalent to both the '.circleci/extended/orb-free.yml' and the base '.circleci/config.yml'
-version: 2.1
-
+version: 2
 orbs:
-  node: circleci/node@4.1
+  aws-s3: circleci/aws-s3@1.0.11
 
+jobs:
+  # The build job
+  build:
+    working_directory: ~/projects
+    docker:
+      - image: circleci/node:erbium-stretch
+    steps:
+      # Checkout the code from the branch into the working_directory
+      - checkout
+      # Log the current branch
+      - run:
+          name: Show current branch
+          command: echo ${CIRCLE_BRANCH}
+      - run:
+          name: Change to front end folder
+          command: cd udagram/udagram-frontend
+      # Restore local dependencies from cache
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "package.json" }}
+            - v1-dependencies-
+      # Install project dependencies
+      - run:
+          name: Install local dependencies
+          command: npm install
+      # Cache local dependencies if they don't exist
+      - save_cache:
+          key: v1-dependencies-{{ checksum "package.json" }}
+          paths:
+            - node_modules
+      # Lint the source code
+      - run:
+          name: Linting
+          command: npm run lint
+      # Test the source code
+      - run:
+          name: Testing
+          command: npm run test
+      # Build project with different configuration based on
+      # the current branch
+      - run:
+          name: Building
+          command: |
+            if [ "${CIRCLE_BRANCH}" == "staging" ]; then
+                npm run build-qa
+            elif [ "${CIRCLE_BRANCH}" == "master" ]; then
+                npm run build-prod
+            else
+                npm run build-dev
+            fi
+      # Cache the dist folder for the deploy job
+      - save_cache:
+          key: v1-dist-{{ .Environment.CIRCLE_BRANCH }}-{{ .Environment.CIRCLE_SHA1 }}
+          paths:
+            - www
+
+  # The deploy job
+  deploy:
+    working_directory: ~/project
+    docker:
+      - image: circleci/node:erbium-stretch
+    steps:
+      # Log the current branch
+      - run:
+          name: Show current branch
+          command: echo ${CIRCLE_BRANCH}
+      # Restore cache from the build job which contains the
+      # dist folder that needs to be deployed
+      - restore_cache:
+          key: v1-dist-{{ .Environment.CIRCLE_BRANCH }}-{{ .Environment.CIRCLE_SHA1 }}
+      - aws-s3/sync:
+          from: www
+          to: "s3://htruong-udagram/"
+          arguments: |
+            --acl public-read \
+            --cache-control "max-age=86400"
+          overwrite: true
 workflows:
-  sample:
+  version: 2
+  # The build and deploy workflow
+  build_and_deploy:
     jobs:
-      - node/test:
-          version: '15.1'
-          # This is the node version to use for the `cimg/node` tag
-          # Relevant tags can be found on the CircleCI Developer Hub
-          # https://circleci.com/developer/images/image/cimg/node
+      - build
+      # The deploy job will only run on the filtered branches and
+      # require the build job to be successful before it starts
+      - deploy:
+          requires:
+            - build
+          filters:
+            branches:
+              only:
+                - develop
+                - staging
+                - master
