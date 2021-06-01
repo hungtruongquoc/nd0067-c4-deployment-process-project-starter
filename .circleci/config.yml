@@ -11,13 +11,13 @@ jobs:
     steps:
       # Checkout the code from the branch into the working_directory
       - checkout
-      - run:
-          name: "Install and update webdriver"
-          command: sudo npm install -g webdriver-manager && sudo -s webdriver-manager update
-      - run:
-          name: "Start webdriver"
-          background: true
-          command: npm run webdriver:start
+#      - run:
+#          name: "Install and update webdriver"
+#          command: sudo npm install -g webdriver-manager && sudo -s webdriver-manager update
+#      - run:
+#          name: "Start webdriver"
+#          background: true
+#          command: npm run webdriver:start
       # Log the current branch
       - run:
           name: Show current branch
@@ -45,10 +45,10 @@ jobs:
           name: Linting
           command: npm run lint
       # Test the source code
-      - run:
-          working_directory: ~/projects/udagram/udagram-frontend
-          name: Testing
-          command: npm run test
+#      - run:
+#          working_directory: ~/projects/udagram/udagram-frontend
+#          name: Testing
+#          command: npm run test
       # Build project with different configuration based on
       # the current branch
       - run:
