@@ -12,12 +12,12 @@ jobs:
       # Checkout the code from the branch into the working_directory
       - checkout
       - run:
-          name: Download Selenium
-          command: curl -O http://selenium-release.storage.googleapis.com/3.5/selenium-server-standalone-3.5.3.jar
+          name: "Install and update webdriver"
+          command: sudo npm install -g webdriver-manager && sudo -s webdriver-manager update
       - run:
-          name: Start Selenium
-          command: java -jar selenium-server-standalone-3.5.3.jar -log test-reports/selenium.log
+          name: "Start webdriver"
           background: true
+          command: npm run webdriver:start
       # Log the current branch
       - run:
           name: Show current branch
