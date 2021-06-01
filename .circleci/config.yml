@@ -19,7 +19,7 @@ jobs:
       - restore_cache:
           working_directory: ~/projects/udagram/udagram-frontend
           keys:
-            - v1-dependencies-{{ checksum "udagram/udagram-frontend/package.json" }}
+            - v1-dependencies-{{ checksum "package.json" }}
             - v1-dependencies-
       # Install project dependencies
       - run:
@@ -29,7 +29,7 @@ jobs:
       # Cache local dependencies if they don't exist
       - save_cache:
           working_directory: ~/projects/udagram/udagram-frontend
-          key: v1-dependencies-{{ checksum "udagram/udagram-frontend/package.json" }}
+          key: v1-dependencies-{{ checksum "package.json" }}
           paths:
             - node_modules
       # Lint the source code
