@@ -1,102 +1,32 @@
-version: 2
+version: 2.1
 orbs:
-  aws-s3: circleci/aws-s3@1.0.11
-
+  node: circleci/node@4.1.0
+#  eb: circleci/aws-elastic-beanstalk@1.0.0
+  aws-cli: circleci/aws-cli@2.0.2
 jobs:
-  # The build job
   build:
-    working_directory: ~/projects
     docker:
-      - image: circleci/node:erbium-stretch
+      - image: "cimg/base:stable"
     steps:
-      # Checkout the code from the branch into the working_directory
+      - node/install
       - checkout
+      - aws-cli/setup
+#      - eb/setup
+      - run:
+          name: Front-End Install
+          command: npm run frontend:install
 #      - run:
-#          name: "Install and update webdriver"
-#          command: sudo npm install -g webdriver-manager && sudo -s webdriver-manager update
+#          name: Back-End Install
+#          command: npm run backend:install
+      - run:
+          name: Front-End Build
+          command: npm run frontend:build
 #      - run:
-#          name: "Start webdriver"
-#          background: true
-#          command: npm run webdriver:start
-      # Log the current branch
-      - run:
-          name: Show current branch
-          command: echo ${CIRCLE_BRANCH}
-      # Restore local dependencies from cache
-      - restore_cache:
-          working_directory: ~/projects/udagram/udagram-frontend
-          keys:
-            - v1-dependencies-{{ checksum "udagram/udagram-frontend/package.json" }}
-            - v1-dependencies-
-      # Install project dependencies
-      - run:
-          working_directory: ~/projects/udagram/udagram-frontend
-          name: Install local dependencies
-          command: npm install
-      # Cache local dependencies if they don't exist
-      - save_cache:
-          working_directory: ~/projects/udagram/udagram-frontend
-          key: v1-dependencies-{{ checksum "udagram/udagram-frontend/package.json" }}
-          paths:
-            - node_modules
-      # Lint the source code
-      - run:
-          working_directory: ~/projects/udagram/udagram-frontend
-          name: Linting
-          command: npm run lint
-      # Test the source code
+#          name: Back-End Build
+#          command: npm run backend:build
 #      - run:
-#          working_directory: ~/projects/udagram/udagram-frontend
-#          name: Testing
-#          command: npm run test
-      # Build project with different configuration based on
-      # the current branch
+#          name: Deploy Back-End
+#          command: npm run backend:deploy
       - run:
-          working_directory: ~/projects/udagram/udagram-frontend
-          name: Building
-          command: npm run build
-      # Cache the dist folder for the deploy job
-      - save_cache:
-          working_directory: ~/projects/udagram/udagram-frontend
-          key: v1-dist-{{ .Environment.CIRCLE_BRANCH }}-{{ .Environment.CIRCLE_SHA1 }}
-          paths:
-            - www
-
-  # The deploy job
-  deploy:
-    working_directory: ~/project
-    docker:
-      - image: circleci/node:erbium-stretch
-    steps:
-      # Log the current branch
-      - run:
-          name: Show current branch
-          command: echo ${CIRCLE_BRANCH}
-      # Restore cache from the build job which contains the
-      # dist folder that needs to be deployed
-      - restore_cache:
-          key: v1-dist-{{ .Environment.CIRCLE_BRANCH }}-{{ .Environment.CIRCLE_SHA1 }}
-      - aws-s3/sync:
-          from: www
-          to: "s3://htruong-udagram/"
-          arguments: |
-            --acl public-read \
-            --cache-control "max-age=86400"
-          overwrite: true
-workflows:
-  version: 2
-  # The build and deploy workflow
-  build_and_deploy:
-    jobs:
-      - build
-      # The deploy job will only run on the filtered branches and
-      # require the build job to be successful before it starts
-      - deploy:
-          requires:
-            - build
-          filters:
-            branches:
-              only:
-                - develop
-                - staging
-                - master
+          name: Deploy Front-End
+          command: npm run frontend:deploy
